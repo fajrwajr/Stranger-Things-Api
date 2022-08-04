@@ -4,6 +4,11 @@ This module takes care of starting the API Server, Loading the DB and Adding the
 from flask import Flask, request, jsonify, url_for, Blueprint
 from api.models import db, User, SThings
 from api.utils import generate_sitemap, APIException
+from dotenv import load_dotenv
+load_dotenv()
+import sendgrid
+from sendgrid.helpers.mail import *
+import os
 
 api = Blueprint('api', __name__)
 
@@ -17,7 +22,7 @@ def get_characters():
 @api.route('/stranger_things', methods=['POST'])
 def strthings():
     data = request.get_json()
-    result = SThings(name=data['name'], age=data['age'], alive=data['alive'])
+    result = SThings(name=data["name"], gender=data["gender"], age=data["age"], alive=data["alive"], dob=data["dob"], description=data["description"])
     db.session.add(result)
     db.session.commit()
     return "Data Successfully Added"
@@ -31,6 +36,22 @@ def delstrangerthings(stranger_things_id):
     delete_exotics = db.session.delete(sthings)
     db.session.commit()
     return jsonify(sthings.serialize())
+
+@api.route('/resetpassword', methods=['POST'])
+def reset():
+    sg = sendgrid.SendGridAPIClient
+    data = request.get_json()
+    # user = User.query.filter_by(email=data['email']).first()
+    # if user:
+    to_email=To('nnngozi@gmail.com')
+    subject = "New Title"
+    email=data['email']
+    mail=Mail(to_email, email, subject)
+    response=sg.client.send.post(request_body=mail.get())
+    print(response.status_code)
+    print(response.body)
+    print(response.headers)
+    return 'sucess'
 
 @api.route('/hello', methods=['POST', 'GET'])
 def handle_hello():
